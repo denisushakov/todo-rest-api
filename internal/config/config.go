@@ -9,9 +9,10 @@ import (
 )
 
 const (
-	DefaultPort = "8080"
-	DBFile      = "./storage/scheduler.db"
-	WebDir      = "./web"
+	DefaultPort  = "8080"
+	DBFile       = "./storage/scheduler.db"
+	WebDir       = "./web"
+	MaxTaskLimit = 50
 )
 
 var (

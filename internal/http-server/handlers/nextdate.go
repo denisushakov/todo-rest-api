@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/denisushakov/todo-rest.git/pkg/scheduler"
+	"github.com/denisushakov/todo-rest.git/internal/scheduler"
 )
 
 func GetNextDate(w http.ResponseWriter, r *http.Request) {
