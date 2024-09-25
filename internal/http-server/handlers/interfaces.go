@@ -8,4 +8,5 @@ type TaskSaver interface {
 
 type TaskGetter interface {
 	GetTasks(search string) ([]*models.Task, error)
+	GetTask(id string) (*models.Task, error)
 }

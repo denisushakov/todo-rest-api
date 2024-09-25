@@ -117,3 +117,21 @@ func (s *Storage) GetTasks(search_st *Search) ([]*models.Task, error) {
 
 	return tasks, nil
 }
+
+func (s *Storage) GetTask(id string) (*models.Task, error) {
+	var task models.Task
+
+	query := "SELECT * FROM scheduler WHERE id = ?"
+
+	stmt, err := s.db.Prepare(query)
+	if err != nil {
+		return nil, fmt.Errorf("%w", err)
+	}
+
+	err = stmt.QueryRow(id).Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
+	if err != nil {
+		return nil, err
+	}
+
+	return &task, nil
+}

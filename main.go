@@ -40,6 +40,8 @@ func main() {
 	router.Route("/api", func(r chi.Router) {
 		r.Get("/tasks", handlers.GetTasks(scheduler))
 		r.Post("/task", handlers.SaveTask(scheduler))
+
+		r.Get("/task", handlers.GetTask(scheduler))
 	})
 
 	log.Printf("Server is running at %s", port)

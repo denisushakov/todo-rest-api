@@ -1,19 +1,20 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 
 	"github.com/denisushakov/todo-rest.git/pkg/models"
 )
 
-type Request struct {
+/*type Request struct {
 	ID      string `json:"id"`
 	Date    string `json:"date,omitempty"`
 	Title   string `json:"title"`
 	Comment string `json:"comment,omitempty"`
 	Repeat  string `json:"repeat,omitempty"`
-}
+}*/
 
 func SaveTask(taskSaver TaskSaver) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -52,5 +53,29 @@ func GetTasks(taskGetter TaskGetter) http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		json.NewEncoder(w).Encode(map[string]interface{}{"tasks": tasks})
+	}
+}
+
+func GetTask(taskGetter TaskGetter) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.URL.Query().Get("id")
+
+		if id == "" {
+			http.Error(w, `{"error": "ID not specified"}`, http.StatusBadRequest)
+			return
+		}
+
+		task, err := taskGetter.GetTask(id)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				http.Error(w, `{"error": "task not found"}`, http.StatusBadRequest)
+				return
+			}
+			http.Error(w, `{"error":"`+err.Error()+`"}`, http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		json.NewEncoder(w).Encode(task)
 	}
 }

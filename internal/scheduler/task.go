@@ -8,15 +8,6 @@ import (
 	"github.com/denisushakov/todo-rest.git/pkg/models"
 )
 
-/*
-	type Task struct {
-		ID      string `json:"id"`
-		Date    string `json:"date"`
-		Title   string `json:"title"`
-		Comment string `json:"comment"`
-		Repeat  string `json:"repeat"`
-	}
-*/
 type Scheduler struct {
 	Storage *sqlite.Storage
 }
@@ -28,7 +19,9 @@ func NewScheduler(dataBase *sqlite.Storage) *Scheduler {
 }
 
 type TaskScheduler interface {
-	SaveTask(task *models.Task) (int64, error)
+	SaveTask(*models.Task) (int64, error)
+	GetTasks(string) ([]*models.Task, error)
+	GetTask(string) (*models.Task, error)
 }
 
 func (s *Scheduler) SaveTask(task *models.Task) (int64, error) {
@@ -82,4 +75,12 @@ func (s *Scheduler) GetTasks(search string) ([]*models.Task, error) {
 	}
 
 	return tasks, nil
+}
+
+func (s *Scheduler) GetTask(id string) (*models.Task, error) {
+	task, err := s.Storage.GetTask(id)
+	if err != nil {
+		return nil, err
+	}
+	return task, nil
 }
