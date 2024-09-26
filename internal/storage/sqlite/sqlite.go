@@ -2,6 +2,7 @@ package sqlite
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -11,6 +12,10 @@ import (
 	"github.com/denisushakov/todo-rest.git/pkg/models"
 
 	_ "github.com/mattn/go-sqlite3"
+)
+
+var (
+	ErrNotFound = errors.New("record not found")
 )
 
 type Storage struct {
@@ -134,4 +139,40 @@ func (s *Storage) GetTask(id string) (*models.Task, error) {
 	}
 
 	return &task, nil
+}
+
+func (s *Storage) UpdateTask(task *models.Task) error {
+	query := `UPDATE scheduler SET
+		date = :date,
+		title = :title,
+		comment = :comment,
+		repeat = :repeat
+	WHERE id = :id`
+
+	stmt, err := s.db.Prepare(query)
+	if err != nil {
+		return fmt.Errorf("%w", err)
+	}
+
+	res, err := stmt.Exec(
+		sql.Named("id", &task.ID),
+		sql.Named("date", &task.Date),
+		sql.Named("title", &task.Title),
+		sql.Named("comment", &task.Comment),
+		sql.Named("repeat", &task.Repeat),
+	)
+
+	if err != nil {
+		return fmt.Errorf("%w", err)
+	}
+
+	num, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("%w", err)
+	}
+	if num == 0 {
+		return ErrNotFound
+	}
+
+	return nil
 }

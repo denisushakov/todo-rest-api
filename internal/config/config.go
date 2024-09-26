@@ -10,7 +10,7 @@ import (
 
 const (
 	DefaultPort  = "8080"
-	DBFile       = "./storage/scheduler.db"
+	DBFile       = "./scheduler.db"
 	WebDir       = "./web"
 	MaxTaskLimit = 50
 )

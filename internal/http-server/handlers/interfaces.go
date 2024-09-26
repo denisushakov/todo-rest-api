@@ -10,3 +10,7 @@ type TaskGetter interface {
 	GetTasks(search string) ([]*models.Task, error)
 	GetTask(id string) (*models.Task, error)
 }
+
+type TaskUpdater interface {
+	UpdateTask(task *models.Task) error
+}
