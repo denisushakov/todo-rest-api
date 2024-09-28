@@ -80,7 +80,7 @@ func (s *Storage) SaveTask(task *models.Task) (int64, error) {
 
 	id, err := res.LastInsertId()
 	if err != nil {
-		return 0, fmt.Errorf("failed to get last insert id: %w", err)
+		return 0, fmt.Errorf("%w", err)
 	}
 
 	return id, nil
@@ -162,6 +162,23 @@ func (s *Storage) UpdateTask(task *models.Task) error {
 		sql.Named("repeat", &task.Repeat),
 	)
 
+	if err != nil {
+		return fmt.Errorf("%w", err)
+	}
+
+	num, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("%w", err)
+	}
+	if num == 0 {
+		return ErrNotFound
+	}
+
+	return nil
+}
+
+func (s *Storage) DeleteTask(id string) error {
+	res, err := s.db.Exec("DELETE FROM scheduler WHERE id = :id", sql.Named("id", id))
 	if err != nil {
 		return fmt.Errorf("%w", err)
 	}

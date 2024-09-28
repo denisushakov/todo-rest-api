@@ -145,13 +145,10 @@ func ParseDays(daysStr string) (int, error) {
 func NextNewDay(now, date time.Time, days int) time.Time {
 	newDate := date.AddDate(0, 0, days)
 	if !newDate.After(now) {
-		//day := now.Day() - newDate.Day()
-		dif := now.Sub(date).Hours() / 24
+		dif := now.Sub(newDate).Hours() / 24
 
-		//interval := int(math.Ceil(float64(day) / float64(days)))
-		//newDate = newDate.AddDate(0, 0, interval*days)
-		interval1 := int(math.Ceil(float64(dif) / float64(days)))
-		newDate = newDate.AddDate(0, 0, interval1*days)
+		interval := int(math.Ceil(float64(dif) / float64(days)))
+		newDate = newDate.AddDate(0, 0, interval*days)
 	}
 	return newDate
 }

@@ -26,29 +26,6 @@ type TaskScheduler interface {
 }
 
 func (s *Scheduler) SaveTask(task *models.Task) (int64, error) {
-	/*var now = time.Now().Truncate(24 * time.Hour)
-	var nextdate string
-
-	if task.Date == "" {
-		nextdate = now.Format("20060102")
-	} else {
-		date, err := time.Parse("20060102", task.Date)
-		if err != nil {
-			return 0, fmt.Errorf("invalid date format")
-		}
-		nextdate = date.Format("20060102")
-		if date.Before(now) {
-			if task.Repeat == "" {
-				nextdate = now.Format("20060102")
-			} else {
-				nextdate, err = NextDate(now, task.Date, task.Repeat)
-				if err != nil {
-					return 0, err
-				}
-			}
-		}
-	}
-	task.Date = nextdate*/
 	if err := check(task); err != nil {
 		return 0, err
 	}
@@ -95,16 +72,14 @@ func (s *Scheduler) UpdateTask(task *models.Task) error {
 	}
 
 	if _, err := strconv.Atoi(task.ID); err != nil {
-		return fmt.Errorf("id is not a number: %v", err)
+		return fmt.Errorf("id is not a number: %w", err)
 	}
 
-	err := check(task)
-	if err != nil {
+	if err := check(task); err != nil {
 		return err
 	}
 
-	err = s.Storage.UpdateTask(task)
-	if err != nil {
+	if err := s.Storage.UpdateTask(task); err != nil {
 		return err
 	}
 	return nil
@@ -123,7 +98,7 @@ func check(task *models.Task) error {
 	} else {
 		date, err := time.Parse("20060102", task.Date)
 		if err != nil {
-			return fmt.Errorf("invalid date format: %v", err)
+			return fmt.Errorf("%w", err)
 		}
 		nextdate = date.Format("20060102")
 		if date.Before(now) {
@@ -132,12 +107,45 @@ func check(task *models.Task) error {
 			} else {
 				nextdate, err = NextDate(now, task.Date, task.Repeat)
 				if err != nil {
-					return err
+					return fmt.Errorf("%w", err)
 				}
 			}
 		}
 	}
 	task.Date = nextdate
 
+	return nil
+}
+
+func (s *Scheduler) MarkTaskCompleted(id string) error {
+	var now = time.Now().Truncate(24 * time.Hour)
+	task, err := s.GetTask(id)
+	if err != nil {
+		return err
+	}
+	if task.Repeat == "" {
+		if err := s.Storage.DeleteTask(id); err != nil {
+			return err
+		}
+	} else {
+		nextdate, err := NextDate(now, task.Date, task.Repeat)
+		if err != nil {
+			return err
+		}
+		task.Date = nextdate
+
+		err = s.Storage.UpdateTask(task)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *Scheduler) DeleteTask(id string) error {
+	if err := s.Storage.DeleteTask(id); err != nil {
+		return err
+	}
 	return nil
 }

@@ -14,3 +14,11 @@ type TaskGetter interface {
 type TaskUpdater interface {
 	UpdateTask(task *models.Task) error
 }
+
+type TaskConditionUpdater interface {
+	MarkTaskCompleted(id string) error
+}
+
+type TaskRemover interface {
+	DeleteTask(id string) error
+}

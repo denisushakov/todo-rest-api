@@ -44,6 +44,10 @@ func main() {
 		r.Get("/task", handlers.GetTask(scheduler))
 
 		r.Put("/task", handlers.UpdateTask(scheduler))
+
+		r.Post("/task/done", handlers.MarkTaskCompleted(scheduler))
+
+		r.Delete("/task", handlers.DeleteTask(scheduler))
 	})
 
 	log.Printf("Server is running at %s", port)

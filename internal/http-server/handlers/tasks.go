@@ -4,24 +4,43 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 
 	"github.com/denisushakov/todo-rest.git/internal/storage/sqlite"
 	"github.com/denisushakov/todo-rest.git/pkg/models"
 )
 
+type ErrorResponse struct {
+	Error string `json:"error"`
+}
+
+func writeErrorResponse(w http.ResponseWriter, err error, statusCode int) {
+	response := ErrorResponse{
+		Error: err.Error(),
+	}
+	jsonResponse, err := json.Marshal(response)
+	if err != nil {
+		log.Printf("error marshal JSON: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(statusCode)
+	w.Write(jsonResponse)
+}
+
 func SaveTask(taskSaver TaskSaver) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req models.Task
 
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, `{"error":"failed to decode JSON"}`, http.StatusBadRequest)
+			writeErrorResponse(w, err, http.StatusBadRequest)
 			return
 		}
 
 		id, err := taskSaver.SaveTask(&req)
 		if err != nil {
-			http.Error(w, `{"error":"`+err.Error()+`"}`, http.StatusInternalServerError)
+			writeErrorResponse(w, err, http.StatusBadRequest)
 			return
 		}
 
@@ -36,7 +55,7 @@ func GetTasks(taskGetter TaskGetter) http.HandlerFunc {
 
 		tasks, err := taskGetter.GetTasks(search)
 		if err != nil {
-			http.Error(w, `{"error":"`+err.Error()+`"}`, http.StatusInternalServerError)
+			writeErrorResponse(w, err, http.StatusBadRequest)
 			return
 		}
 
@@ -58,10 +77,9 @@ func GetTask(taskGetter TaskGetter) http.HandlerFunc {
 		if err != nil {
 			switch {
 			case errors.Is(err, sql.ErrNoRows):
-				http.Error(w, `{"error": "task not found"}`, http.StatusNotFound)
+				writeErrorResponse(w, err, http.StatusNotFound)
 			default:
-				http.Error(w, `{"error": "`+err.Error()+`"}`, http.StatusInternalServerError)
-				//http.Error(w, fmt.Sprintf(`{"error":%s"}`, err.Error()), http.StatusInternalServerError)
+				writeErrorResponse(w, err, http.StatusInternalServerError)
 			}
 			return
 		}
@@ -76,19 +94,55 @@ func UpdateTask(taskUpdater TaskUpdater) http.HandlerFunc {
 		var task models.Task
 
 		if err := json.NewDecoder(r.Body).Decode(&task); err != nil {
-			http.Error(w, `{"error":"failed to decode JSON"}`, http.StatusBadRequest)
+			writeErrorResponse(w, err, http.StatusBadRequest)
 			return
 		}
 
 		if err := taskUpdater.UpdateTask(&task); err != nil {
 			switch {
 			case errors.Is(err, sqlite.ErrNotFound):
-				http.Error(w, `{"error":"record not found"}`, http.StatusNotFound)
+				writeErrorResponse(w, err, http.StatusNotFound)
 			default:
-				//http.Error(w, `{"error":"bad"}`, http.StatusInternalServerError)
-				http.Error(w, `{"error":"`+err.Error()+`"}`, http.StatusInternalServerError)
-				//http.Error(w, fmt.Sprintf(`{"error":%s"}`, err.Error()), http.StatusInternalServerError)
+				writeErrorResponse(w, err, http.StatusInternalServerError)
 			}
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		json.NewEncoder(w).Encode(map[string]interface{}{})
+	}
+}
+
+func MarkTaskCompleted(taskConditionUpdater TaskConditionUpdater) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.URL.Query().Get("id")
+
+		if id == "" {
+			http.Error(w, `{"error": "id not specified"}`, http.StatusBadRequest)
+			return
+		}
+
+		if err := taskConditionUpdater.MarkTaskCompleted(id); err != nil {
+			writeErrorResponse(w, err, http.StatusNotFound)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		json.NewEncoder(w).Encode(map[string]interface{}{})
+	}
+}
+
+func DeleteTask(taskRemover TaskRemover) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.URL.Query().Get("id")
+
+		if id == "" {
+			http.Error(w, `{"error": "id not specified"}`, http.StatusBadRequest)
+			return
+		}
+
+		if err := taskRemover.DeleteTask(id); err != nil {
+			writeErrorResponse(w, err, http.StatusNotFound)
 			return
 		}
 
