@@ -16,7 +16,6 @@ import (
 func main() {
 	cfg := config.MustLoad()
 
-	//fmt.Println(cfg)
 	_ = cfg
 
 	webDir := config.WebDir

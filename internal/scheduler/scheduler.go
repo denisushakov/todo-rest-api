@@ -23,7 +23,7 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 
 	var newDate time.Time
 	switch s[0] {
-	case "d": // ++
+	case "d":
 		if len(s) != 2 {
 			return "", fmt.Errorf("invalid repeat format: %s", repeat)
 		}
@@ -31,10 +31,10 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("invalid day range: %s", s[1])
 		}
-		newDate = NextNewDay(now, currentDate, days)
-	case "y": // ++
-		newDate = NextValidYear(now, currentDate)
-	case "w": // ++
+		newDate = NextNearestDay(now, currentDate, days)
+	case "y":
+		newDate = NextNearestYear(now, currentDate)
+	case "w":
 		if len(s) != 2 {
 			return "", fmt.Errorf("incorrect repeat format: %s", repeat)
 		}
@@ -43,7 +43,7 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 			return "", err
 		}
 		newDate = NextNearestWeekDay(now, currentDate, weekDays)
-	case "m": // ++
+	case "m":
 		if len(s) < 2 || len(s) > 3 {
 			return "", fmt.Errorf("incorrect repeat format: %s", repeat)
 		}
@@ -51,25 +51,16 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		//months := make([]int, 0, 2)
-		/*allMonths := true
-		if len(s) == 3 {
-			allMonths = false
-			months, err = ParsevalidMonths(s[2])
-			if err != nil {
-				return "", err
-			}
-		}*/
+
 		if len(s) == 2 {
-			newDate = NextValidDayInAllMonths(now, currentDate, days)
+			newDate = NextNearestDayInAllMonths(now, currentDate, days)
 		} else {
 			months, err := ParsevalidMonths(s[2])
 			if err != nil {
 				return "", err
 			}
-			newDate = NextValidDayInMonth(now, currentDate, days, months)
+			newDate = NextNearestDayInMonth(now, currentDate, days, months)
 		}
-
 	default:
 		return "", fmt.Errorf("invalid repeat format: %s", repeat)
 	}
@@ -138,7 +129,7 @@ func ParseDaysInMonth(daysStr string) ([]int, error) {
 	return mDays, nil
 }
 
-func NextNewDay(now, date time.Time, days int) time.Time {
+func NextNearestDay(now, date time.Time, days int) time.Time {
 	newDate := date.AddDate(0, 0, days)
 	if !newDate.After(now) {
 		dif := now.Sub(newDate).Hours() / 24
@@ -149,7 +140,7 @@ func NextNewDay(now, date time.Time, days int) time.Time {
 	return newDate
 }
 
-func NextValidYear(now, date time.Time) time.Time {
+func NextNearestYear(now, date time.Time) time.Time {
 	newDate := date.AddDate(1, 0, 0)
 	if !newDate.After(now) {
 		year := now.Year() - newDate.Year()
@@ -191,156 +182,82 @@ func NextNearestWeekDay(now time.Time, date time.Time, weekDays []int) time.Time
 	return newDate
 }
 
-func NextValidDayInMonth(now time.Time, date time.Time, days, months []int) time.Time {
-	var newDate time.Time
-	curMonth := date.Month()
-	curDay := date.Day()
-	curYear := date.Year()
-	var valid bool
-	copyMonths := make([]int, 0, len(months))
-
-	for _, month := range months {
-		if month >= int(curMonth) {
-			if month > int(curMonth) {
-				curDay = 0
-			}
-			if res, ok := checkDay(curYear, time.Month(month), curDay, days); ok {
-				newDate = res
-				valid = true
-				break
-			}
-			copyMonths = append(copyMonths, month)
-		} else {
-			copyMonths = append(copyMonths, month)
-		}
+func NextNearestDayInMonth(now time.Time, date time.Time, days, months []int) time.Time {
+	if date.Before(now) {
+		date = now
 	}
 
-	if !valid || newDate.Before(now) {
-		valid = false
-		curMonth := now.Month()
-		curDay := now.Day()
-		curYear := now.Year()
+	currentMonth := date.Month()
+	currentDay := date.Day()
+	currentYear := date.Year()
 
-		for _, month := range months {
-			if month == int(curMonth) {
-				if res, ok := checkDay(curYear, time.Month(month), curDay, days); ok {
-					newDate = res
-					valid = true
-					break
-				}
-			} else if month > int(curMonth) {
-				if res, ok := checkDay(curYear, time.Month(month), 0, days); ok {
-					newDate = res
-					valid = true
-					break
-				}
+	for _, val := range months {
+		month := time.Month(val)
+		if month == currentMonth {
+			if newDate, ok := checkDay(currentYear, month, currentDay, days); ok {
+				return newDate
+			}
+		} else if month >= currentMonth {
+			if newDate, ok := checkDay(currentYear, month, 0, days); ok {
+				return newDate
 			}
 		}
 	}
 
-	if !valid {
-		if copyMonths[0]+1 > 12 {
-			curMonth = time.Month(1)
-			curYear++
-		} else {
-			curMonth = time.Month(copyMonths[0] + 1)
-		}
-		if res, ok := checkDay(now.Year()+1, curMonth, 0, days); ok {
-			newDate = res
-		}
-	}
-
-	return newDate
+	return time.Time{}
 }
 
-func NextValidDayInAllMonths(now time.Time, date time.Time, days []int) time.Time {
-	var newDate time.Time
-	curMonth := date.Month()
-	curDay := date.Day()
-	curYear := date.Year()
-	var valid bool
-
-	if res, ok := checkDay(curYear, curMonth, curDay, days); ok {
-		newDate = res
-		valid = true
-	} else {
-		if int(curMonth)+1 > 12 {
-			curMonth = time.Month(1)
-			curYear++
-		} else {
-			curMonth = time.Month(int(curMonth) + 1)
-		}
-		if res, ok := checkDay(curYear, curMonth, 0, days); ok {
-			newDate = res
-			valid = true
-		}
+func NextNearestDayInAllMonths(now time.Time, date time.Time, days []int) time.Time {
+	if date.Before(now) {
+		date = now
 	}
 
-	if !valid || newDate.Before(now) {
-		valid = false
-		curMonth := now.Month()
-		curDay := now.Day()
-		curYear := now.Year()
-		if res, ok := checkDay(curYear, curMonth, curDay, days); ok {
-			newDate = res
-			valid = true
-		} else {
-			if int(curMonth)+1 > 12 {
-				curMonth = time.Month(1)
-				curYear++
-			} else {
-				curMonth = time.Month(int(curMonth) + 1)
-			}
-			if res, ok := checkDay(curYear, curMonth, 0, days); ok {
-				newDate = res
-				valid = true
-			}
-		}
+	currentMonth := date.Month()
+	currentDay := date.Day()
+	currentYear := date.Year()
+
+	if newDate, ok := checkDay(currentYear, currentMonth, currentDay, days); ok {
+		return newDate
 	}
 
-	if !valid {
-		if int(curMonth)+1 > 12 {
-			curMonth = time.Month(1)
-			curYear++
-		} else {
-			curMonth = time.Month(int(curMonth) + 1)
-		}
-		if res, ok := checkDay(now.Year()+1, curMonth, 0, days); ok {
-			newDate = res
-		}
+	currentMonth++
+	if currentMonth > 12 {
+		currentMonth = time.January
+		currentYear++
 	}
 
-	return newDate
+	if newDate, ok := checkDay(currentYear, currentMonth, 0, days); ok {
+		return newDate
+	}
+
+	return time.Time{}
 }
 
 func customSort(arr []int) []int {
-	// Массив для остальных чисел
-	var regular []int
-	var minusOneFound, minusTwoFound bool
+	var result []int
+	var last, nextToLast bool
 
-	// Проход по массиву и отбор значений
 	for _, num := range arr {
 		if num == -1 {
-			minusOneFound = true
+			last = true
 		} else if num == -2 {
-			minusTwoFound = true
+			nextToLast = true
 		} else {
-			regular = append(regular, num)
+			result = append(result, num)
 		}
 	}
 
-	// Сортировка обычных чисел
-	sort.Ints(regular)
+	sort.Ints(result)
 
-	// Добавляем -2 и -1 в нужном порядке
-	if minusTwoFound {
-		regular = append(regular, -2)
-	}
-	if minusOneFound {
-		regular = append(regular, -1)
+	if nextToLast {
+		result = append(result, -2)
 	}
 
-	return regular
+	if last {
+		result = append(result, -1)
+	}
+
+	return result
 }
 
 func daysInMonth(year int, month time.Month) int {
@@ -349,7 +266,7 @@ func daysInMonth(year int, month time.Month) int {
 }
 
 func checkDay(year int, month time.Month, curDay int, days []int) (time.Time, bool) {
-	maxDay := daysInMonth(year, time.Month(month))
+	maxDay := daysInMonth(year, month)
 	for _, day := range days {
 		checkDay := day
 		if day == -1 {
