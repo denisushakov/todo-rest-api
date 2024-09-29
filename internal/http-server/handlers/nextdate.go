@@ -15,13 +15,13 @@ func GetNextDate(w http.ResponseWriter, r *http.Request) {
 
 	nowDate, err := time.Parse("20060102", now)
 	if err != nil {
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		writeErrorResponse(w, err, http.StatusBadRequest)
 		log.Printf("time cannot pasre: %s", err)
 	}
 
 	newDate, err := scheduler.NextDate(nowDate, date, repeat)
 	if err != nil {
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		writeErrorResponse(w, err, http.StatusBadRequest)
 		log.Printf("new date not created: %s", err)
 		return
 	}
