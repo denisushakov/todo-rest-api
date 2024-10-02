@@ -7,6 +7,7 @@ import (
 
 	"github.com/denisushakov/todo-rest/internal/config"
 	"github.com/denisushakov/todo-rest/internal/http-server/handlers"
+
 	mwAuth "github.com/denisushakov/todo-rest/internal/http-server/middleware/auth"
 	"github.com/denisushakov/todo-rest/internal/scheduler"
 	"github.com/denisushakov/todo-rest/internal/storage/sqlite"
@@ -33,7 +34,7 @@ func main() {
 
 	router.Use(middleware.URLFormat)
 
-	router.Handle("/", http.FileServer(http.Dir(webDir)))
+	router.Handle("/*", http.FileServer(http.Dir(webDir)))
 
 	router.Get("/api/nextdate", handlers.GetNextDate)
 	router.Post("/api/signin", handlers.LoginHandler)

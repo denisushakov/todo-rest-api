@@ -49,7 +49,7 @@ func Auth(next http.Handler) http.Handler {
 			return
 		}
 
-		newHashString := GetHashString(hash)
+		newHashString := GetHashString(pass)
 
 		if hash != newHashString {
 			http.Error(w, `{"error": "authentification required"}`, http.StatusUnauthorized)
