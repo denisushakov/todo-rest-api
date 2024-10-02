@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/denisushakov/todo-rest.git/internal/storage/sqlite"
-	"github.com/denisushakov/todo-rest.git/pkg/models"
+	"github.com/denisushakov/todo-rest/internal/storage/sqlite"
+	"github.com/denisushakov/todo-rest/pkg/models"
 )
 
 type Scheduler struct {
@@ -22,7 +22,10 @@ func NewScheduler(dataBase *sqlite.Storage) *Scheduler {
 type TaskScheduler interface {
 	SaveTask(*models.Task) (int64, error)
 	GetTasks(string) ([]*models.Task, error)
-	GetTask(string) (*models.Task, error)
+	GetTaskByID(string) (*models.Task, error)
+	UpdateTask(*models.Task) error
+	MarkTaskCompleted(string) error
+	DeleteTask(string) error
 }
 
 func (s *Scheduler) SaveTask(task *models.Task) (int64, error) {
@@ -58,8 +61,8 @@ func (s *Scheduler) GetTasks(search string) ([]*models.Task, error) {
 	return tasks, nil
 }
 
-func (s *Scheduler) GetTask(id string) (*models.Task, error) {
-	task, err := s.Storage.GetTask(id)
+func (s *Scheduler) GetTaskByID(id string) (*models.Task, error) {
+	task, err := s.Storage.GetTaskByID(id)
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +122,7 @@ func check(task *models.Task) error {
 
 func (s *Scheduler) MarkTaskCompleted(id string) error {
 	var now = time.Now().Truncate(24 * time.Hour)
-	task, err := s.GetTask(id)
+	task, err := s.GetTaskByID(id)
 	if err != nil {
 		return err
 	}

@@ -8,8 +8,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/denisushakov/todo-rest.git/internal/config"
-	"github.com/denisushakov/todo-rest.git/pkg/models"
+	"github.com/denisushakov/todo-rest/internal/config"
+	"github.com/denisushakov/todo-rest/pkg/models"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -123,7 +123,7 @@ func (s *Storage) GetTasks(search_st *Search) ([]*models.Task, error) {
 	return tasks, nil
 }
 
-func (s *Storage) GetTask(id string) (*models.Task, error) {
+func (s *Storage) GetTaskByID(id string) (*models.Task, error) {
 	var task models.Task
 
 	query := "SELECT * FROM scheduler WHERE id = ?"

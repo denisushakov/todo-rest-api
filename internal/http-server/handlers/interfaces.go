@@ -1,6 +1,6 @@
 package handlers
 
-import "github.com/denisushakov/todo-rest.git/pkg/models"
+import "github.com/denisushakov/todo-rest/pkg/models"
 
 type TaskSaver interface {
 	SaveTask(task *models.Task) (int64, error)
@@ -8,7 +8,7 @@ type TaskSaver interface {
 
 type TaskGetter interface {
 	GetTasks(search string) ([]*models.Task, error)
-	GetTask(id string) (*models.Task, error)
+	GetTaskByID(id string) (*models.Task, error)
 }
 
 type TaskUpdater interface {

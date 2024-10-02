@@ -16,20 +16,30 @@ const (
 )
 
 var (
-	Port       string
-	DBFilePath string
+	Port           string
+	DBFilePath     string
+	Password       string
+	SecretKeyBytes []byte
 )
 
 type Config struct {
 }
 
 func MustLoad() *Config {
+
 	err := gotenv.Load()
 	if err != nil {
 		log.Fatalf("env file is not set: %v", err)
 	}
 	Port = os.Getenv("TODO_PORT")
 	DBFilePath = os.Getenv("TODO_DBFILE")
+	Password = os.Getenv("TODO_PASSWORD")
+
+	secretKey := os.Getenv("TODO_JWT_SECRET_KEY")
+	if secretKey == "" {
+		log.Fatal("secret key is empty")
+	}
+	SecretKeyBytes = []byte(secretKey)
 
 	var cfg Config
 

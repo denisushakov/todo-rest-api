@@ -7,8 +7,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/denisushakov/todo-rest.git/internal/storage/sqlite"
-	"github.com/denisushakov/todo-rest.git/pkg/models"
+	"github.com/denisushakov/todo-rest/internal/storage/sqlite"
+	"github.com/denisushakov/todo-rest/pkg/models"
 )
 
 type ErrorResponse struct {
@@ -31,14 +31,14 @@ func writeErrorResponse(w http.ResponseWriter, err error, statusCode int) {
 
 func SaveTask(taskSaver TaskSaver) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req models.Task
+		var task models.Task
 
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&task); err != nil {
 			writeErrorResponse(w, err, http.StatusBadRequest)
 			return
 		}
 
-		id, err := taskSaver.SaveTask(&req)
+		id, err := taskSaver.SaveTask(&task)
 		if err != nil {
 			writeErrorResponse(w, err, http.StatusBadRequest)
 			return
@@ -64,7 +64,7 @@ func GetTasks(taskGetter TaskGetter) http.HandlerFunc {
 	}
 }
 
-func GetTask(taskGetter TaskGetter) http.HandlerFunc {
+func GetTaskByID(taskGetter TaskGetter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := r.URL.Query().Get("id")
 
@@ -73,7 +73,7 @@ func GetTask(taskGetter TaskGetter) http.HandlerFunc {
 			return
 		}
 
-		task, err := taskGetter.GetTask(id)
+		task, err := taskGetter.GetTaskByID(id)
 		if err != nil {
 			switch {
 			case errors.Is(err, sql.ErrNoRows):
