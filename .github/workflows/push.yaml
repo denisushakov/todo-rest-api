@@ -13,6 +13,22 @@ jobs:
                 ./app & # Запуск сервера в фоновом режиме
                 sleep 25 # Подождите пока сервер запустится
 
+            - name: Start the server
+              run: |
+                  mkdir -p /app/storage
+                  TODO_PORT=7540 TODO_DBFILE=/app/storage/scheduler.db ./app &
+                  for i in {1..10}; do
+                    if nc -zv localhost 7540; then
+                      echo "Server is up and running!"
+                      break
+                    fi
+                    echo "Waiting for the server..."
+                    sleep 3
+                  done
+              env:
+                TODO_PORT: 7540
+                TODO_DBFILE: /app/storage/scheduler.db
+
             - name: Run Unit Tests
               run: GOOS=linux GOARCH=amd64 go test ./tests
 
