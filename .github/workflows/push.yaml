@@ -7,20 +7,11 @@ jobs:
         steps:
             - uses: actions/checkout@v4
 
-            - name: Load environment variables
-              run: |
-                cat .env | grep -v '^#' >> $GITHUB_ENV
-
-            - name: Set up SQLite environment
-              run: |
-                mkdir -p /app/storage
-                touch /app/storage/scheduler.db
-
             - name: Build and Run Server
               run: |
                 go build -o app ./cmd/scheduler/main.go
                 ./app & # Запуск сервера в фоновом режиме
-                sleep 20 # Подождите пока сервер запустится
+                sleep 25 # Подождите пока сервер запустится
 
             - name: Run Unit Tests
               run: GOOS=linux GOARCH=amd64 go test ./tests
