@@ -7,6 +7,12 @@ jobs:
         steps:
             - uses: actions/checkout@v4
 
+            - name: Build and Run Server
+              run: |
+                go build -o app ./cmd/scheduler/main.go
+                ./app & # Запуск сервера в фоновом режиме
+                sleep 5 # Подождите пока сервер запустится
+
             - name: Run Unit Tests
               run: GOOS=linux GOARCH=amd64 go test ./...
 
