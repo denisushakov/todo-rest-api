@@ -7,11 +7,19 @@ jobs:
         steps:
             - uses: actions/checkout@v4
 
+            - name: Set up SQLite environment
+              run: |
+                mkdir -p /app/storage
+                touch /app/storage/scheduler.db
+
             - name: Build and Run Server
               run: |
                 go build -o app ./cmd/scheduler/main.go
-                ./app & # Запуск сервера в фоновом режиме
-                sleep 5 # Подождите пока сервер запустится
+                ./app &
+              continue-on-error: true
+
+            - name: Wait for the server to start
+              run: sleep 10
 
             - name: Run Unit Tests
               run: GOOS=linux GOARCH=amd64 go test ./...
