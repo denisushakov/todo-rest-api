@@ -3,32 +3,28 @@ on: push
 jobs:
     test:
         runs-on: ubuntu-latest
+        container: golang:1.23
         steps:
-        - name: Checkout code
-          uses: actions/checkout@v4
+            - uses: actions/checkout@v4
 
-        - name: Set up Go
-          uses: actions/setup-go@v4
-          with:
-            go-version: 1.23
+            - name: Load environment variables
+              run: |
+                cat .env | grep -v '^#' >> $GITHUB_ENV
 
-        - name: Load environment variables
-          run: |
-              cat .env | grep -v '^#' >> $GITHUB_ENV
+            - name: Set up SQLite environment
+              run: |
+                mkdir -p /app/storage
+                touch /app/storage/scheduler.db
 
-        - name: Build the application
-          run: |
-            go build -o app ./cmd/scheduler/main.go
+            - name: Build and Run Server
+              run: |
+                go build -o app ./cmd/scheduler/main.go
+                ./app & # Запуск сервера в фоновом режиме
+                sleep 20 # Подождите пока сервер запустится
 
-        - name: Start server in background
-          run: |
-            ./app & 
-            sleep 5  # Даём время серверу на запуск
+            - name: Run Unit Tests
+              run: GOOS=linux GOARCH=amd64 go test ./tests
 
-        - name: Run Unit Tests
-          run: |
-            GOOS=linux GOARCH=amd64 go test ./...
-
-        - name: Print server logs (for debugging)
-          run: |
-            cat server.log || true
+            - name: Vet
+              run: |
+                go vet ./...
