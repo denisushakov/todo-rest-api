@@ -13,15 +13,7 @@ import (
 )
 
 func getURL(path string, url string) string {
-	/*port := Port
-	envPort := os.Getenv("TODO_PORT")
-	if len(envPort) > 0 {
-		if eport, err := strconv.ParseInt(envPort, 10, 32); err == nil {
-			port = int(eport)
-		}
-	}*/
 	path = strings.TrimPrefix(strings.ReplaceAll(path, `\`, `/`), `../web/`)
-	//fmt.Sprintf("http://localhost:%d/%s", port, path)
 	return fmt.Sprintf("%s/%s", url, path)
 }
 
