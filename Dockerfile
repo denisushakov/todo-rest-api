@@ -14,6 +14,7 @@ FROM alpine:3.18
 
 ENV TODO_PORT=7540
 ENV TODO_DBFILE=/app/storage/scheduler.db
+ENV ENV_FILE_PATH=/app/.env
 
 WORKDIR /app
 

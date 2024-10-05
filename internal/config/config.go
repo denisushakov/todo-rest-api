@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	"github.com/subosito/gotenv"
 )
@@ -37,12 +38,16 @@ func MustLoad() *Config {
 		dir = filepath.Dir(dir)
 	}
 
-	err = gotenv.Load(filepath.Join(dir, ".env"))
+	envFilePath := os.Getenv("ENV_FILE_PATH")
+	if envFilePath == "" {
+		envFilePath = ".env"
+	}
+	err = gotenv.Load(absPath(dir, envFilePath))
 	if err != nil {
 		log.Fatalf("env file is not set: %v", err)
 	}
 
-	WebDirPath = filepath.Join(dir, DefaultWebDir)
+	WebDirPath = absPath(dir, DefaultWebDir)
 
 	Port = os.Getenv("TODO_PORT")
 	if Port == "" {
@@ -53,7 +58,7 @@ func MustLoad() *Config {
 	if DBFilePath == "" {
 		DBFilePath = DefaultDBFile
 	}
-	DBFilePath = filepath.Join(dir, DBFilePath)
+	DBFilePath = absPath(dir, DBFilePath)
 
 	Password = os.Getenv("TODO_PASSWORD")
 
@@ -66,4 +71,15 @@ func MustLoad() *Config {
 	var cfg Config
 
 	return &cfg
+}
+
+func absPath(dir, path string) string {
+	if runtime.GOOS == "linux" || runtime.GOOS == "darwin" {
+		// for Linux и MacOS
+		path = filepath.Join("..", path)
+	} else {
+		// for Windows
+		path = filepath.Join(dir, path)
+	}
+	return path
 }
