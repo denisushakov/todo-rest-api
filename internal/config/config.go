@@ -9,15 +9,16 @@ import (
 )
 
 const (
-	DefaultPort  = "8080"
-	DBFile       = "./storage/scheduler.db"
-	WebDir       = "./web"
-	MaxTaskLimit = 50
+	DefaultPort   = "8080"
+	DefaultDBFile = "./storage/scheduler.db"
+	DefaultWebDir = "./web"
+	MaxTaskLimit  = 50
 )
 
 var (
 	Port           string
 	DBFilePath     string
+	WebDirPath     string
 	Password       string
 	SecretKeyBytes []byte
 )
@@ -27,12 +28,33 @@ type Config struct {
 
 func MustLoad() *Config {
 
-	err := gotenv.Load()
+	dir, err := os.Getwd() // current directory
+	if err != nil {
+		log.Fatalf("failed to get current directory: %v", err)
+	}
+
+	if filepath.Base(dir) == "tests" {
+		dir = filepath.Dir(dir)
+	}
+
+	err = gotenv.Load(filepath.Join(dir, ".env"))
 	if err != nil {
 		log.Fatalf("env file is not set: %v", err)
 	}
+
+	WebDirPath = filepath.Join(dir, DefaultWebDir)
+
 	Port = os.Getenv("TODO_PORT")
+	if Port == "" {
+		Port = DefaultPort
+	}
+
 	DBFilePath = os.Getenv("TODO_DBFILE")
+	if DBFilePath == "" {
+		DBFilePath = DefaultDBFile
+	}
+	DBFilePath = filepath.Join(dir, DBFilePath)
+
 	Password = os.Getenv("TODO_PASSWORD")
 
 	secretKey := os.Getenv("TODO_JWT_SECRET_KEY")
@@ -44,27 +66,4 @@ func MustLoad() *Config {
 	var cfg Config
 
 	return &cfg
-}
-
-func GetPort() string {
-	port := Port
-	if port == "" {
-		port = DefaultPort
-	}
-	return port
-}
-
-func GetDBFilePath(defaultDBName string) string {
-	dbFilePath := DBFilePath
-	if dbFilePath != "" {
-		return dbFilePath
-	}
-	executablePath, err := os.Executable()
-	if err != nil {
-		log.Fatalf("Error getting executable path: %v", err)
-	}
-
-	parentDir := filepath.Dir(filepath.Dir(executablePath))
-
-	return filepath.Join(parentDir, defaultDBName)
 }

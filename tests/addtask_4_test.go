@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func requestJSON(apipath string, values map[string]any, method string) ([]byte, error) {
+func requestJSON(url, apipath string, values map[string]any, method string) ([]byte, error) {
 	var (
 		data []byte
 		err  error
@@ -28,7 +28,7 @@ func requestJSON(apipath string, values map[string]any, method string) ([]byte, 
 	}
 	var resp *http.Response
 
-	req, err := http.NewRequest(method, getURL(apipath), bytes.NewBuffer(data))
+	req, err := http.NewRequest(method, getURL(apipath, url), bytes.NewBuffer(data))
 	if err != nil {
 		return nil, err
 	}
@@ -60,13 +60,13 @@ func requestJSON(apipath string, values map[string]any, method string) ([]byte, 
 	return io.ReadAll(resp.Body)
 }
 
-func postJSON(apipath string, values map[string]any, method string) (map[string]any, error) {
+func postJSON(url, apipath string, values map[string]any, method string) (map[string]any, error) {
 	var (
 		m   map[string]any
 		err error
 	)
 
-	body, err := requestJSON(apipath, values, method)
+	body, err := requestJSON(url, apipath, values, method)
 	if err != nil {
 		return nil, err
 	}
@@ -82,6 +82,10 @@ type task struct {
 }
 
 func TestAddTask(t *testing.T) {
+	// Создаем мок-сервер с реальными обработчиками
+	server := createTestServer()
+	defer server.Close()
+
 	db := openDB(t)
 	defer db.Close()
 
@@ -93,7 +97,7 @@ func TestAddTask(t *testing.T) {
 		{"20240212", "Заголовок", "", "ooops"},
 	}
 	for _, v := range tbl {
-		m, err := postJSON("api/task", map[string]any{
+		m, err := postJSON(server.URL, "api/task", map[string]any{
 			"date":    v.date,
 			"title":   v.title,
 			"comment": v.comment,
@@ -114,7 +118,7 @@ func TestAddTask(t *testing.T) {
 			if today {
 				v.date = now.Format(`20060102`)
 			}
-			m, err := postJSON("api/task", map[string]any{
+			m, err := postJSON(server.URL, "api/task", map[string]any{
 				"date":    v.date,
 				"title":   v.title,
 				"comment": v.comment,

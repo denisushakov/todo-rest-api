@@ -12,6 +12,10 @@ import (
 )
 
 func TestTask(t *testing.T) {
+	// Создаем мок-сервер с реальными обработчиками
+	server := createTestServer()
+	defer server.Close()
+
 	db := openDB(t)
 	defer db.Close()
 
@@ -24,9 +28,9 @@ func TestTask(t *testing.T) {
 		repeat:  "d 5",
 	}
 
-	todo := addTask(t, task)
+	todo := addTask(t, server.URL, task)
 
-	body, err := requestJSON("api/task", nil, http.MethodGet)
+	body, err := requestJSON(server.URL, "api/task", nil, http.MethodGet)
 	assert.NoError(t, err)
 	var m map[string]string
 	err = json.Unmarshal(body, &m)
@@ -36,7 +40,7 @@ func TestTask(t *testing.T) {
 	assert.False(t, !ok || len(fmt.Sprint(e)) == 0,
 		"Ожидается ошибка для вызова /api/task")
 
-	body, err = requestJSON("api/task?id="+todo, nil, http.MethodGet)
+	body, err = requestJSON(server.URL, "api/task?id="+todo, nil, http.MethodGet)
 	assert.NoError(t, err)
 	err = json.Unmarshal(body, &m)
 	assert.NoError(t, err)
@@ -54,6 +58,10 @@ type fulltask struct {
 }
 
 func TestEditTask(t *testing.T) {
+	// Создаем мок-сервер с реальными обработчиками
+	server := createTestServer()
+	defer server.Close()
+
 	db := openDB(t)
 	defer db.Close()
 
@@ -66,7 +74,7 @@ func TestEditTask(t *testing.T) {
 		repeat:  "",
 	}
 
-	id := addTask(t, tsk)
+	id := addTask(t, server.URL, tsk)
 
 	tbl := []fulltask{
 		{"", task{"20240129", "Тест", "", ""}},
@@ -78,7 +86,7 @@ func TestEditTask(t *testing.T) {
 		{id, task{"20240212", "Заголовок", "", "ooops"}},
 	}
 	for _, v := range tbl {
-		m, err := postJSON("api/task", map[string]any{
+		m, err := postJSON(server.URL, "api/task", map[string]any{
 			"id":      v.id,
 			"date":    v.date,
 			"title":   v.title,
@@ -96,7 +104,7 @@ func TestEditTask(t *testing.T) {
 	}
 
 	updateTask := func(newVals map[string]any) {
-		mupd, err := postJSON("api/task", newVals, http.MethodPut)
+		mupd, err := postJSON(server.URL, "api/task", newVals, http.MethodPut)
 		assert.NoError(t, err)
 
 		e, ok := mupd["error"]

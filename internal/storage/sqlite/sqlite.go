@@ -4,9 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
-	"os"
-	"path/filepath"
 
 	"github.com/denisushakov/todo-rest/internal/config"
 	"github.com/denisushakov/todo-rest/pkg/models"
@@ -29,15 +26,6 @@ type Search struct {
 }
 
 func New(storagePath string) (*Storage, error) {
-
-	if storagePath == "" {
-		appPath, err := os.Executable()
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Println(appPath)
-		storagePath = filepath.Join(filepath.Dir(appPath), config.DBFile)
-	}
 
 	db, err := sql.Open("sqlite3", storagePath)
 	if err != nil {

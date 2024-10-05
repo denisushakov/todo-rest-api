@@ -17,6 +17,10 @@ type nextDate struct {
 }
 
 func TestNextDate(t *testing.T) {
+	// Создаем мок-сервер с реальными обработчиками
+	server := createTestServer()
+	defer server.Close()
+
 	tbl := []nextDate{
 		{"20240126", "", ""},
 		{"20240126", "k 34", ""},
@@ -41,7 +45,7 @@ func TestNextDate(t *testing.T) {
 		for _, v := range tbl {
 			urlPath := fmt.Sprintf("api/nextdate?now=20240126&date=%s&repeat=%s",
 				url.QueryEscape(v.date), url.QueryEscape(v.repeat))
-			get, err := getBody(urlPath)
+			get, err := getBody(urlPath, server.URL)
 			assert.NoError(t, err)
 			next := strings.TrimSpace(string(get))
 			_, err = time.Parse("20060102", next)

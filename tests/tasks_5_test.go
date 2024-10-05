@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func addTask(t *testing.T, task task) string {
-	ret, err := postJSON("api/task", map[string]any{
+func addTask(t *testing.T, urlPath string, task task) string {
+	ret, err := postJSON(urlPath, "api/task", map[string]any{
 		"date":    task.date,
 		"title":   task.title,
 		"comment": task.comment,
@@ -24,12 +24,12 @@ func addTask(t *testing.T, task task) string {
 	return id
 }
 
-func getTasks(t *testing.T, search string) []map[string]string {
+func getTasks(t *testing.T, urlPath, search string) []map[string]string {
 	url := "api/tasks"
 	if Search {
 		url += "?search=" + search
 	}
-	body, err := requestJSON(url, nil, http.MethodGet)
+	body, err := requestJSON(urlPath, url, nil, http.MethodGet)
 	assert.NoError(t, err)
 
 	var m map[string][]map[string]string
@@ -39,6 +39,10 @@ func getTasks(t *testing.T, search string) []map[string]string {
 }
 
 func TestTasks(t *testing.T) {
+	// Создаем мок-сервер с реальными обработчиками
+	server := createTestServer()
+	defer server.Close()
+
 	db := openDB(t)
 	defer db.Close()
 
@@ -46,11 +50,11 @@ func TestTasks(t *testing.T) {
 	_, err := db.Exec("DELETE FROM scheduler")
 	assert.NoError(t, err)
 
-	tasks := getTasks(t, "")
+	tasks := getTasks(t, server.URL, "")
 	assert.NotNil(t, tasks)
 	assert.Empty(t, tasks)
 
-	addTask(t, task{
+	addTask(t, server.URL, task{
 		date:    now.Format(`20060102`),
 		title:   "Просмотр фильма",
 		comment: "с попкорном",
@@ -58,51 +62,51 @@ func TestTasks(t *testing.T) {
 	})
 	now = now.AddDate(0, 0, 1)
 	date := now.Format(`20060102`)
-	addTask(t, task{
+	addTask(t, server.URL, task{
 		date:    date,
 		title:   "Сходить в бассейн",
 		comment: "",
 		repeat:  "",
 	})
-	addTask(t, task{
+	addTask(t, server.URL, task{
 		date:    date,
 		title:   "Оплатить коммуналку",
 		comment: "",
 		repeat:  "d 30",
 	})
-	tasks = getTasks(t, "")
+	tasks = getTasks(t, server.URL, "")
 	assert.Equal(t, len(tasks), 3)
 
 	now = now.AddDate(0, 0, 2)
 	date = now.Format(`20060102`)
-	addTask(t, task{
+	addTask(t, server.URL, task{
 		date:    date,
 		title:   "Поплавать",
 		comment: "Бассейн с тренером",
 		repeat:  "d 7",
 	})
-	addTask(t, task{
+	addTask(t, server.URL, task{
 		date:    date,
 		title:   "Позвонить в УК",
 		comment: "Разобраться с горячей водой",
 		repeat:  "",
 	})
-	addTask(t, task{
+	addTask(t, server.URL, task{
 		date:    date,
 		title:   "Встретится с Васей",
 		comment: "в 18:00",
 		repeat:  "",
 	})
 
-	tasks = getTasks(t, "")
+	tasks = getTasks(t, server.URL, "")
 	assert.Equal(t, len(tasks), 6)
 
 	if !Search {
 		return
 	}
-	tasks = getTasks(t, "УК")
+	tasks = getTasks(t, server.URL, "УК")
 	assert.Equal(t, len(tasks), 1)
-	tasks = getTasks(t, now.Format(`02.01.2006`))
+	tasks = getTasks(t, server.URL, now.Format(`02.01.2006`))
 	assert.Equal(t, len(tasks), 3)
 
 }
