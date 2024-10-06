@@ -4,7 +4,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"runtime"
 
 	"github.com/subosito/gotenv"
 )
@@ -74,8 +73,5 @@ func MustLoad() *Config {
 }
 
 func absPath(dir, path string) string {
-	if runtime.GOOS == "windows" {
-		return filepath.Join(dir, path)
-	}
 	return filepath.Join(dir, path)
 }
