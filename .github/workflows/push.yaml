@@ -8,6 +8,8 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Run Unit Tests
+        env:
+          ENV_FILE_PATH: './.env'
         run: GOOS=linux GOARCH=amd64 go test ./...
 
       - name: Vet
