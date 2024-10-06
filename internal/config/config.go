@@ -74,11 +74,7 @@ func MustLoad() *Config {
 }
 
 func absPath(dir, path string) string {
-	if runtime.GOOS == "linux" || runtime.GOOS == "darwin" {
-		// for Linux и MacOS
-		path = filepath.Join("..", path)
-	} else {
-		// for Windows
+	if runtime.GOOS == "windows" {
 		path = filepath.Join(dir, path)
 	}
 	return path
