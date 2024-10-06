@@ -9,7 +9,8 @@ jobs:
 
       - name: Run Unit Tests
         env:
-          ENV_FILE_PATH: './.env'
+          ENV_FILE_PATH: ./.env
+          ENV TODO_DBFILE: /storage/scheduler.db
         run: GOOS=linux GOARCH=amd64 go test ./...
 
       - name: Vet

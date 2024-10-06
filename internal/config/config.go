@@ -75,7 +75,7 @@ func MustLoad() *Config {
 
 func absPath(dir, path string) string {
 	if runtime.GOOS == "windows" {
-		path = filepath.Join(dir, path)
+		return filepath.Join(dir, path)
 	}
-	return path
+	return filepath.Join(dir, path)
 }
