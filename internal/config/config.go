@@ -37,11 +37,7 @@ func MustLoad() *Config {
 		dir = filepath.Dir(dir)
 	}
 
-	envFilePath := os.Getenv("ENV_FILE_PATH")
-	if envFilePath == "" {
-		envFilePath = ".env"
-	}
-	err = gotenv.Load(absPath(dir, envFilePath))
+	err = gotenv.Load(absPath(dir, ".env"))
 	if err != nil {
 		log.Fatalf("env file is not set: %v", err)
 	}
