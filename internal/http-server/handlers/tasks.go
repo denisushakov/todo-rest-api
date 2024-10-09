@@ -40,7 +40,12 @@ func SaveTask(taskSaver TaskSaver) http.HandlerFunc {
 
 		id, err := taskSaver.SaveTask(&task)
 		if err != nil {
-			writeErrorResponse(w, err, http.StatusBadRequest)
+			switch {
+			case errors.Is(err, sql.ErrConnDone):
+				writeErrorResponse(w, err, http.StatusInternalServerError)
+			default:
+				writeErrorResponse(w, err, http.StatusBadRequest)
+			}
 			return
 		}
 
@@ -55,7 +60,12 @@ func GetTasks(taskGetter TaskGetter) http.HandlerFunc {
 
 		tasks, err := taskGetter.GetTasks(search)
 		if err != nil {
-			writeErrorResponse(w, err, http.StatusBadRequest)
+			switch {
+			case errors.Is(err, sql.ErrConnDone):
+				writeErrorResponse(w, err, http.StatusInternalServerError)
+			default:
+				writeErrorResponse(w, err, http.StatusBadRequest)
+			}
 			return
 		}
 

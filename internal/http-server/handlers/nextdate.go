@@ -17,6 +17,7 @@ func GetNextDate(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		writeErrorResponse(w, err, http.StatusBadRequest)
 		log.Printf("time cannot pasre: %s", err)
+		return
 	}
 
 	newDate, err := scheduler.NextDate(nowDate, date, repeat)

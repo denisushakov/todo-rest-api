@@ -13,7 +13,7 @@ RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o my_app ./cmd/scheduler/mai
 FROM alpine:3.18
 
 ENV TODO_PORT=7540
-ENV TODO_DBFILE=/storage/scheduler.db
+ENV TODO_DBFILE=/app/storage/scheduler.db
 
 WORKDIR /app
 

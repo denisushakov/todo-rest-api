@@ -23,10 +23,7 @@ var (
 	SecretKeyBytes []byte
 )
 
-type Config struct {
-}
-
-func MustLoad() *Config {
+func MustLoad() {
 
 	dir, err := os.Getwd() // current directory
 	if err != nil {
@@ -63,9 +60,6 @@ func MustLoad() *Config {
 	}
 	SecretKeyBytes = []byte(secretKey)
 
-	var cfg Config
-
-	return &cfg
 }
 
 func absPath(dir, path string) string {

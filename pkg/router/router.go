@@ -3,7 +3,6 @@ package router
 import (
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/denisushakov/todo-rest/internal/scheduler"
 	"github.com/denisushakov/todo-rest/internal/storage/sqlite"
@@ -21,9 +20,8 @@ func SetupRouter() *chi.Mux {
 	storage, err := sqlite.New(config.DBFilePath)
 	if err != nil {
 		log.Fatalf("Failed to connect to the database: %v", err)
-		os.Exit(1)
 	}
-	scheduler := scheduler.NewScheduler(storage)
+	planner := scheduler.NewScheduler(storage)
 
 	router := chi.NewRouter()
 
@@ -31,7 +29,7 @@ func SetupRouter() *chi.Mux {
 
 	router.Handle("/*", http.FileServer(http.Dir(webDir)))
 
-	handlers.RegisterRoutes(router, scheduler)
+	handlers.RegisterRoutes(router, planner)
 
 	return router
 }

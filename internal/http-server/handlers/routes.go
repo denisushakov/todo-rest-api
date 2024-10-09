@@ -6,7 +6,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func RegisterRoutes(router *chi.Mux, scheduler *scheduler.Scheduler) {
+func RegisterRoutes(router *chi.Mux, scheduler *scheduler.Planner) {
 	router.Get("/api/nextdate", GetNextDate)
 	router.Post("/api/signin", LoginHandler)
 

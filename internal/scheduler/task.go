@@ -9,12 +9,12 @@ import (
 	"github.com/denisushakov/todo-rest/pkg/models"
 )
 
-type Scheduler struct {
+type Planner struct {
 	Storage *sqlite.Storage
 }
 
-func NewScheduler(dataBase *sqlite.Storage) *Scheduler {
-	return &Scheduler{
+func NewScheduler(dataBase *sqlite.Storage) *Planner {
+	return &Planner{
 		Storage: dataBase,
 	}
 }
@@ -28,7 +28,7 @@ type TaskScheduler interface {
 	DeleteTask(string) error
 }
 
-func (s *Scheduler) SaveTask(task *models.Task) (int64, error) {
+func (s *Planner) SaveTask(task *models.Task) (int64, error) {
 	if err := check(task); err != nil {
 		return 0, err
 	}
@@ -40,7 +40,7 @@ func (s *Scheduler) SaveTask(task *models.Task) (int64, error) {
 	return id, nil
 }
 
-func (s *Scheduler) GetTasks(search string) ([]*models.Task, error) {
+func (s *Planner) GetTasks(search string) ([]*models.Task, error) {
 
 	var sr_st sqlite.Search
 	if search != "" {
@@ -61,7 +61,7 @@ func (s *Scheduler) GetTasks(search string) ([]*models.Task, error) {
 	return tasks, nil
 }
 
-func (s *Scheduler) GetTaskByID(id string) (*models.Task, error) {
+func (s *Planner) GetTaskByID(id string) (*models.Task, error) {
 	task, err := s.Storage.GetTaskByID(id)
 	if err != nil {
 		return nil, err
@@ -69,7 +69,7 @@ func (s *Scheduler) GetTaskByID(id string) (*models.Task, error) {
 	return task, nil
 }
 
-func (s *Scheduler) UpdateTask(task *models.Task) error {
+func (s *Planner) UpdateTask(task *models.Task) error {
 	if task.ID == "" {
 		return fmt.Errorf("id is empty")
 	}
@@ -120,7 +120,7 @@ func check(task *models.Task) error {
 	return nil
 }
 
-func (s *Scheduler) MarkTaskCompleted(id string) error {
+func (s *Planner) MarkTaskCompleted(id string) error {
 	var now = time.Now().Truncate(24 * time.Hour)
 	task, err := s.GetTaskByID(id)
 	if err != nil {
@@ -146,7 +146,7 @@ func (s *Scheduler) MarkTaskCompleted(id string) error {
 	return nil
 }
 
-func (s *Scheduler) DeleteTask(id string) error {
+func (s *Planner) DeleteTask(id string) error {
 	if err := s.Storage.DeleteTask(id); err != nil {
 		return err
 	}

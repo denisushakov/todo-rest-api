@@ -9,8 +9,7 @@ import (
 )
 
 func main() {
-	cfg := config.MustLoad()
-	_ = cfg
+	config.MustLoad()
 
 	port := ":" + config.Port
 

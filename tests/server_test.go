@@ -10,9 +10,7 @@ import (
 )
 
 func createTestServer() *httptest.Server {
-
-	cfg := config.MustLoad()
-	_ = cfg
+	config.MustLoad()
 
 	router := router.SetupRouter()
 
