@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func notFoundTask(t *testing.T, id string) {
-	body, err := requestJSON("api/task?id="+id, nil, http.MethodGet)
+func notFoundTask(t *testing.T, url, id string) {
+	body, err := requestJSON(url, "api/task?id="+id, nil, http.MethodGet)
 	assert.NoError(t, err)
 	var m map[string]any
 	err = json.Unmarshal(body, &m)
@@ -20,27 +20,31 @@ func notFoundTask(t *testing.T, id string) {
 }
 
 func TestDone(t *testing.T) {
+	// Создаем мок-сервер с реальными обработчиками
+	server := createTestServer()
+	defer server.Close()
+
 	db := openDB(t)
 	defer db.Close()
 
 	now := time.Now()
-	id := addTask(t, task{
+	id := addTask(t, server.URL, task{
 		date:  now.Format(`20060102`),
 		title: "Свести баланс",
 	})
 
-	ret, err := postJSON("api/task/done?id="+id, nil, http.MethodPost)
+	ret, err := postJSON(server.URL, "api/task/done?id="+id, nil, http.MethodPost)
 	assert.NoError(t, err)
 	assert.Empty(t, ret)
-	notFoundTask(t, id)
+	notFoundTask(t, server.URL, id)
 
-	id = addTask(t, task{
+	id = addTask(t, server.URL, task{
 		title:  "Проверить работу /api/task/done",
 		repeat: "d 3",
 	})
 
 	for i := 0; i < 3; i++ {
-		ret, err := postJSON("api/task/done?id="+id, nil, http.MethodPost)
+		ret, err := postJSON(server.URL, "api/task/done?id="+id, nil, http.MethodPost)
 		assert.NoError(t, err)
 		assert.Empty(t, ret)
 
@@ -53,23 +57,27 @@ func TestDone(t *testing.T) {
 }
 
 func TestDelTask(t *testing.T) {
+	// Создаем мок-сервер с реальными обработчиками
+	server := createTestServer()
+	defer server.Close()
+
 	db := openDB(t)
 	defer db.Close()
 
-	id := addTask(t, task{
+	id := addTask(t, server.URL, task{
 		title:  "Временная задача",
 		repeat: "d 3",
 	})
-	ret, err := postJSON("api/task?id="+id, nil, http.MethodDelete)
+	ret, err := postJSON(server.URL, "api/task?id="+id, nil, http.MethodDelete)
 	assert.NoError(t, err)
 	assert.Empty(t, ret)
 
-	notFoundTask(t, id)
+	notFoundTask(t, server.URL, id)
 
-	ret, err = postJSON("api/task", nil, http.MethodDelete)
+	ret, err = postJSON(server.URL, "api/task", nil, http.MethodDelete)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, ret)
-	ret, err = postJSON("api/task?id=wjhgese", nil, http.MethodDelete)
+	ret, err = postJSON(server.URL, "api/task?id=wjhgese", nil, http.MethodDelete)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, ret)
 }

@@ -6,27 +6,19 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func getURL(path string) string {
-	port := Port
-	envPort := os.Getenv("TODO_PORT")
-	if len(envPort) > 0 {
-		if eport, err := strconv.ParseInt(envPort, 10, 32); err == nil {
-			port = int(eport)
-		}
-	}
+func getURL(path string, url string) string {
 	path = strings.TrimPrefix(strings.ReplaceAll(path, `\`, `/`), `../web/`)
-	return fmt.Sprintf("http://localhost:%d/%s", port, path)
+	return fmt.Sprintf("%s/%s", url, path)
 }
 
-func getBody(path string) ([]byte, error) {
-	resp, err := http.Get(getURL(path))
+func getBody(path string, url string) ([]byte, error) {
+	resp, err := http.Get(getURL(path, url))
 	if err != nil {
 		return nil, err
 	}
@@ -56,12 +48,16 @@ func walkDir(path string, f func(fname string) error) error {
 }
 
 func TestApp(t *testing.T) {
+	// Создаем мок-сервер с реальными обработчиками
+	server := createTestServer()
+	defer server.Close()
+
 	cmp := func(fname string) error {
 		fbody, err := os.ReadFile(fname)
 		if err != nil {
 			return err
 		}
-		body, err := getBody(fname)
+		body, err := getBody(fname, server.URL)
 		if err != nil {
 			return err
 		}

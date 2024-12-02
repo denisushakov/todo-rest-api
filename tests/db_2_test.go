@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/denisushakov/todo-rest/internal/config"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/assert"
@@ -29,6 +30,11 @@ func openDB(t *testing.T) *sqlx.DB {
 	if len(envFile) > 0 {
 		dbfile = envFile
 	}
+	// ++
+	if config.DBFilePath != "" {
+		dbfile = config.DBFilePath
+	}
+	// --
 	db, err := sqlx.Connect("sqlite3", dbfile)
 	assert.NoError(t, err)
 	return db
@@ -48,6 +54,7 @@ func TestDB(t *testing.T) {
 	assert.NoError(t, err)
 
 	id, err := res.LastInsertId()
+	assert.NoError(t, err)
 
 	var task Task
 	err = db.Get(&task, `SELECT * FROM scheduler WHERE id=?`, id)
